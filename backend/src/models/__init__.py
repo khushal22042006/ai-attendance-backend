@@ -1,10 +1,10 @@
 # backend/src/models/__init__.py
 
 from .user_model import *
-from .attendence_record_model import *
-from .attendence_session_model import *
+from .attendance_record_model import *
+from .attendance_session_model import *
 from .class_model import *
-from .face_embeding_model import *
+from .face_embedding_model import *
 from .student_model import *
 
 # Export all models

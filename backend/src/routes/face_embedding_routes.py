@@ -1,7 +1,7 @@
 # backend/src/routes/face_embedding_routes.py
 from typing import List
 from fastapi import APIRouter, HTTPException
-from models.face_embeding_model import (
+from models.face_embedding_model import (
     FaceEmbeddingCreate, 
     FaceEmbeddingResponse, 
     FaceEmbeddingUpdate

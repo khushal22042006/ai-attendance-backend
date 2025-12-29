@@ -1,6 +1,6 @@
 # backend/src/routes/attendance_session_routes.py
 from fastapi import APIRouter, HTTPException
-from models.attendence_session_model import (
+from models.attendance_session_model import (
     AttendanceSessionCreate, 
     AttendanceSessionResponse, 
     AttendanceSessionUpdate

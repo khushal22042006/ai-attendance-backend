@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 from bson import ObjectId
 from fastapi import HTTPException
-from models.attendence_session_model import (
+from models.attendance_session_model import (
     AttendanceSessionCreate, 
     AttendanceSessionResponse, 
     AttendanceSessionUpdate, 

@@ -1,7 +1,7 @@
 # backend/src/routes/attendance_record_routes.py
 from typing import List
 from fastapi import APIRouter, HTTPException
-from models.attendence_record_model import (
+from models.attendance_record_model import (
     AttendanceRecordCreate, 
     AttendanceRecordResponse, 
     AttendanceRecordUpdate

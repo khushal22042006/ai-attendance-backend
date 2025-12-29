@@ -4,7 +4,7 @@ from datetime import datetime
 from bson import ObjectId
 import numpy as np
 from fastapi import HTTPException
-from models.face_embeding_model import (
+from models.face_embedding_model import (
     FaceEmbeddingCreate, 
     FaceEmbeddingResponse, 
     FaceEmbeddingUpdate, 
