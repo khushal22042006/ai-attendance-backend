@@ -1,3 +1,4 @@
+# backend/src/config/db_connect.py (fixed)
 import os
 from typing import Optional
 from dotenv import load_dotenv
@@ -6,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB Configuration
-MONGO_URI = os.getenv("MONGO_URI", "")
-MONGO_DB_NAME = os.getenv("DB_NAME", "")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DB_NAME = os.getenv("DB_NAME", "ai_attendance")
 
 # Global MongoDB client
 mongo_client = None
@@ -25,7 +26,7 @@ async def init_mongodb():
         from motor.motor_asyncio import AsyncIOMotorClient
         from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
         
-        print(f"🔗 Connecting to MongoDB at {MONGO_URI}")
+        print(f"🔗 Connecting to MongoDB at {MONGO_DB_NAME}")
         
         # Create async client
         mongo_client = AsyncIOMotorClient(
@@ -65,13 +66,16 @@ async def create_mongo_indexes():
     Create necessary indexes in MongoDB
     """
     try:
-        if mongo_db:
-            # Create indexes for users collection
-            await mongo_db.users.create_index("email", unique=True)
-            await mongo_db.users.create_index("role")
-            await mongo_db.users.create_index("created_at")
+        if mongo_db is None:
+            print("⚠️  MongoDB database not initialized")
+            return
             
-            print("✅ MongoDB indexes created")
+        # Create indexes for users collection
+        await mongo_db.users.create_index("email", unique=True)
+        await mongo_db.users.create_index("role")
+        await mongo_db.users.create_index("created_at")
+        
+        print("✅ MongoDB indexes created")
     except Exception as e:
         print(f"⚠️  Could not create indexes: {e}")
 
