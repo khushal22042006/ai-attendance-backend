@@ -1,22 +1,36 @@
+# backend/src/models/user_model.py
 from typing import Optional
 from datetime import datetime
-from bson import ObjectId
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from enum import Enum
 
+# Import the shared types from base.py
+from .base import PyObjectId, UserRole
 
-class UserRole(str, Enum):
-    TEACHER = "teacher"
-    STUDENT = "student"
-    ADMIN = "admin"
+# --- 1. Auth Specific Models ---
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
-# Pydantic model for creating a user
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class UserLogin(BaseModel):
+    email: EmailStr  # Fixed typo: changed EmailStra to EmailStr
+    password: str
+
+# New Model to bypass the 'FieldInfo' attribute error in Python 3.13
+class UserLoginRequest(BaseModel):
+    username: str  # We use 'username' to stay compatible with OAuth2 logic
+    password: str
+
+# --- 2. User Management Models ---
+
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(..., min_length=6)
-    role: UserRole = UserRole.TEACHER
+    role: UserRole = UserRole.STUDENT
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -24,88 +38,51 @@ class UserCreate(BaseModel):
                 "name": "Rahul Sharma",
                 "email": "rahul@gmail.com",
                 "password": "securepassword123",
-                "role": "teacher"
+                "role": "student"
             }
         }
     )
 
-
-# Pydantic model for updating a user
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100)
     email: Optional[EmailStr] = None
     role: Optional[UserRole] = None
+    password: Optional[str] = None
 
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "name": "Rahul Sharma Updated",
-                "email": "rahul.updated@gmail.com",
-                "role": "teacher"
-            }
-        }
-    )
-
-
-# Pydantic model for response (without password)
 class UserResponse(BaseModel):
-    id: str
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
     name: str
     email: EmailStr
     role: UserRole
     created_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "id": "507f1f77bcf86cd799439011",
-                "name": "Rahul Sharma",
-                "email": "rahul@gmail.com",
-                "role": "teacher",
-                "created_at": "2025-01-01T10:00:00"
-            }
-        }
-    )
-
-
-# Pydantic model for database (with MongoDB ObjectId)
-class UserInDB(BaseModel):
-    id: str = Field(..., alias="_id")
-    name: str
-    email: EmailStr
-    password: str  # Hashed password
-    role: UserRole
-    created_at: datetime
+    google_id: Optional[str] = None
 
     model_config = ConfigDict(
         populate_by_name=True,
-        arbitrary_types_allowed=True,
+        from_attributes=True,
         json_schema_extra={
             "example": {
                 "_id": "507f1f77bcf86cd799439011",
                 "name": "Rahul Sharma",
                 "email": "rahul@gmail.com",
-                "password": "hashed_password",
                 "role": "teacher",
                 "created_at": "2025-01-01T10:00:00"
             }
         }
     )
 
+# --- 3. Database Model ---
 
-# Helper function to convert ObjectId to string
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+class UserInDB(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    name: str
+    email: EmailStr
+    hashed_password: Optional[str] = None
+    role: UserRole
+    created_at: datetime
+    google_id: Optional[str] = None
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )

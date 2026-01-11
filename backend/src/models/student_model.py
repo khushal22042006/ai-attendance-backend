@@ -2,8 +2,9 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
-from .user_model import PyObjectId
 
+# --- CRITICAL FIX: Import from .base to avoid circular dependency ---
+from .base import PyObjectId 
 
 class StudentCreate(BaseModel):
     student_id: str = Field(..., pattern=r'^[A-Za-z0-9_]+$')
@@ -31,16 +32,15 @@ class StudentCreate(BaseModel):
         }
     )
 
-
 class StudentUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100)
     class_id: Optional[PyObjectId] = None
     email: Optional[EmailStr] = None
     registered_face: Optional[bool] = None
 
-
 class StudentResponse(BaseModel):
-    id: str
+    # Use PyObjectId here to handle MongoDB _id correctly
+    id: PyObjectId = Field(alias="_id")
     student_id: str
     name: str
     class_id: str
@@ -49,33 +49,8 @@ class StudentResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "id": "65d5f8a9b4c7e12f34567895",
-                "student_id": "BCA2023_045",
-                "name": "Amit Kumar",
-                "class_id": "65d5f8a9b4c7e12f34567892",
-                "email": "amit@gmail.com",
-                "registered_face": True,
-                "created_at": "2025-01-01T09:00:00"
-            }
-        }
-    )
-
-
-class StudentInDB(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    student_id: str
-    name: str
-    class_id: PyObjectId
-    email: EmailStr
-    registered_face: bool
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-    model_config = ConfigDict(
         populate_by_name=True,
-        arbitrary_types_allowed=True,
+        from_attributes=True,
         json_schema_extra={
             "example": {
                 "_id": "65d5f8a9b4c7e12f34567895",
@@ -89,6 +64,19 @@ class StudentInDB(BaseModel):
         }
     )
 
+class StudentInDB(BaseModel):
+    id: PyObjectId = Field(alias="_id", default=None)
+    student_id: str
+    name: str
+    class_id: PyObjectId
+    email: EmailStr
+    registered_face: bool
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )
 
 class StudentAttendanceSummary(BaseModel):
     student_id: str

@@ -131,3 +131,14 @@ async def get_db():
     Dependency for FastAPI routes
     """
     yield mongo_db
+
+# This allows 'from config.db_connect import user_collection' to work
+def user_collection():
+    return get_mongo_collection("users")
+
+# Note: We keep the variable export simple so your dependencies can find it
+from motor.motor_asyncio import AsyncIOMotorClient
+# We provide a property-like access if you want to keep the existing dependency style
+@property
+def user_collection_ptr():
+    return get_mongo_collection("users")

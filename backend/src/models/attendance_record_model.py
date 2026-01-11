@@ -2,16 +2,9 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from enum import Enum
-from .user_model import PyObjectId  # Import from your existing model
 
-
-class AttendanceStatus(str, Enum):
-    PRESENT = "present"
-    ABSENT = "absent"
-    LATE = "late"
-    LEAVE = "leave"
-
+# --- FIXED: Import shared types from base ---
+from .base import PyObjectId, AttendanceStatus
 
 class AttendanceRecordCreate(BaseModel):
     session_id: PyObjectId
@@ -19,7 +12,7 @@ class AttendanceRecordCreate(BaseModel):
     status: AttendanceStatus = AttendanceStatus.PRESENT
     confidence: float = Field(..., ge=0.0, le=1.0)
     image_path: Optional[str] = None
-    marked_at: datetime
+    marked_at: datetime = Field(default_factory=datetime.utcnow)
 
     @field_validator('session_id')
     @classmethod
@@ -41,15 +34,14 @@ class AttendanceRecordCreate(BaseModel):
         }
     )
 
-
 class AttendanceRecordUpdate(BaseModel):
     status: Optional[AttendanceStatus] = None
     confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
     image_path: Optional[str] = None
 
-
 class AttendanceRecordResponse(BaseModel):
-    id: str
+    # Map MongoDB _id to id
+    id: PyObjectId = Field(alias="_id")
     session_id: str
     student_id: str
     status: AttendanceStatus
@@ -58,6 +50,7 @@ class AttendanceRecordResponse(BaseModel):
     marked_at: datetime
 
     model_config = ConfigDict(
+        populate_by_name=True,
         from_attributes=True,
         json_schema_extra={
             "example": {
@@ -66,34 +59,21 @@ class AttendanceRecordResponse(BaseModel):
                 "student_id": "BCA2023_045",
                 "status": "present",
                 "confidence": 0.91,
-                "image_path": "/proofs/session1/img1.jpg",
                 "marked_at": "2025-01-10T10:12:00"
             }
         }
     )
 
-
 class AttendanceRecordInDB(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
     session_id: PyObjectId
     student_id: str
     status: AttendanceStatus
     confidence: float
-    image_path: Optional[str]
-    marked_at: datetime
+    image_path: Optional[str] = None
+    marked_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(
         populate_by_name=True,
-        arbitrary_types_allowed=True,
-        json_schema_extra={
-            "example": {
-                "_id": "65d5f8a9b4c7e12f34567891",
-                "session_id": "65d5f8a9b4c7e12f34567890",
-                "student_id": "BCA2023_045",
-                "status": "present",
-                "confidence": 0.91,
-                "image_path": "/proofs/session1/img1.jpg",
-                "marked_at": "2025-01-10T10:12:00"
-            }
-        }
+        arbitrary_types_allowed=True
     )
